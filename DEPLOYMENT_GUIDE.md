@@ -11,7 +11,8 @@ Your backend currently runs locally (`localhost`) and saves data to a local file
     *   SQLite is not suitable for production.
     *   Use a managed PostgreSQL database (e.g., Supabase, Neon, AWS RDS, DigitalOcean).
     *   Update `database.py` to connect to the PostgreSQL URL.
-    *   Update `requirements.txt`: Replace `aiosqlite` with `asyncpg`.
+    *   Update `requirements.txt`: Replace `aiosqlite` with `psycopg2-binary`.
+    *   (Optionally keeping both is fine, but `psycopg2` is required for Postgres with standard SQLAlchemy).
 
 2.  **Cloud Storage for Images**:
     *   You cannot store uploaded images on the server's disk (they will be lost on restart/redeploy).

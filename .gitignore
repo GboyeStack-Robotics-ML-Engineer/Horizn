@@ -13,6 +13,7 @@ backend/build/
 backend/uploads/
 backend/*.db
 
+
 # Environment variables
 .env
 .env.local

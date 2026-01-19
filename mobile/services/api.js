@@ -1,12 +1,14 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
 // CONFIGURATION
-// Replace this with your computer's local IP address if running on a physical device
-// For Android Emulator, use 'http://10.0.2.2:8000'
-// For iOS Simulator, use 'http://localhost:8000'
-const API_URL = 'http://192.168.0.3:8000';
+// API URL is set via EAS build environment variables
+// Development: Local IP, Preview/Production: Cloud URL
+const API_URL = Constants.expoConfig?.extra?.apiUrl
+    || process.env.EXPO_PUBLIC_API_URL
+    || 'http://192.168.0.2:8000';
 
 const api = axios.create({
     baseURL: `${API_URL}/auth`,

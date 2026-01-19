@@ -11,6 +11,8 @@ Your backend currently runs locally (`localhost`) and saves data to a local file
     *   SQLite is not suitable for production.
     *   Use a managed PostgreSQL database (e.g., Supabase, Neon, AWS RDS, DigitalOcean).
     *   Update `database.py` to connect to the PostgreSQL URL.
+        *   **Note**: If hosting on the same platform (e.g. Render/Railway), use the **Internal URL** for better performance.
+        *   If connecting from your laptop, use the **External URL**.
     *   Update `requirements.txt`: Replace `aiosqlite` with `psycopg2-binary`.
     *   (Optionally keeping both is fine, but `psycopg2` is required for Postgres with standard SQLAlchemy).
 

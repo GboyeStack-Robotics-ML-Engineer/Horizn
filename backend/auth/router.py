@@ -10,6 +10,8 @@ from typing import Optional
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+import cloudinary
+import cloudinary.uploader
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -40,7 +42,16 @@ from auth.schemas import (
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 # OTP expiration time in minutes
+# OTP expiration time in minutes
 OTP_EXPIRE_MINUTES = 10
+
+# Configure Cloudinary
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+    secure=True
+)
 
 
 # ============ Helper Functions ============
@@ -442,27 +453,49 @@ async def upload_avatar(
     # Generate unique filename
     file_ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
     filename = f"avatar_{current_user.id}_{uuid.uuid4().hex[:8]}.{file_ext}"
-    file_path = os.path.join(UPLOAD_DIR, filename)
+
+    # Check if Cloudinary is configured
+    if os.getenv("CLOUDINARY_CLOUD_NAME"):
+        # Upload to Cloudinary
+        try:
+            # Cloudinary handles file stream directly
+            upload_result = cloudinary.uploader.upload(
+                file.file,
+                public_id=f"avatars/{filename.split('.')[0]}",
+                overwrite=True,
+                resource_type="image"
+            )
+            # Get secure URL
+            file_url = upload_result.get("secure_url")
+            print(f"\n☁️ [DEV] Uploaded to Cloudinary: {file_url}\n")
+        except Exception as e:
+            print(f"\n❌ [DEV] Cloudinary upload failed: {str(e)}\n")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Cloud upload failed: {str(e)}"
+            )
+    else:
+        # Fallback to Local Storage
+        file_path = os.path.join(UPLOAD_DIR, filename)
+        
+        # Ensure uploads directory exists
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+        
+        # Save file
+        try:
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+            file_url = f"/uploads/{filename}"
+            print(f"\n📂 [DEV] Saved locally: {file_url}\n")
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to save file: {str(e)}"
+            )
     
-    # Ensure uploads directory exists
-    os.makedirs(UPLOAD_DIR, exist_ok=True)
-    
-    # Save file
-    try:
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to save file: {str(e)}"
-        )
-    
-    # Update user's avatar_url (will store relative URL)
-    # The full URL will be constructed on the client side
-    current_user.avatar_url = f"/uploads/{filename}"
+    # Update user's avatar_url
+    current_user.avatar_url = file_url
     db.commit()
     db.refresh(current_user)
-    
-    print(f"\n📸 [DEV] Avatar uploaded for {current_user.email}: {filename}\n")
     
     return UserResponse.model_validate(current_user)

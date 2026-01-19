@@ -11,8 +11,8 @@ from typing import Optional
 from dotenv import load_dotenv
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, HTTPException, status, Request
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -29,8 +29,8 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60")
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# OAuth2 scheme for token extraction
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login", auto_error=False)
+# HTTP Bearer scheme for token extraction (shows simple token input in Swagger)
+http_bearer = HTTPBearer(auto_error=False)
 
 
 def hash_password(password: str) -> str:
@@ -99,7 +99,8 @@ def generate_otp(length: int = 4) -> str:
 
 
 async def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    request: Request,
+    credentials: HTTPAuthorizationCredentials = Depends(http_bearer),
     db: Session = Depends(get_db)
 ) -> User:
     """
@@ -114,11 +115,15 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     
+    # Extract token from credentials
+    token = credentials.credentials if credentials else None
+    
     # Debug logging
     print(f"\n🔐 [DEBUG] Token received: {token[:30] if token else 'None'}...")
     
     if not token:
         print("❌ [DEBUG] No token provided!")
+        print(f"   [DEBUG] Headers: {request.headers}")
         raise credentials_exception
     
     payload = decode_token(token)

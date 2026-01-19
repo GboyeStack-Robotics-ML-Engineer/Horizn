@@ -1,6 +1,6 @@
 """
 Authentication Router for Horizn Backend
-API endpoints for user authentication
+API endpoints for user authentication system
 """
 import os
 import uuid

@@ -1,0 +1,43 @@
+export default {
+    expo: {
+        name: "Horizn",
+        slug: "horizn",
+        version: "1.0.0",
+        owner: "gboye",
+        orientation: "portrait",
+        icon: "./assets/icon.png",
+        userInterfaceStyle: "light",
+        newArchEnabled: true,
+        splash: {
+            image: "./assets/splash-icon.png",
+            resizeMode: "contain",
+            backgroundColor: "#0f172a"
+        },
+        ios: {
+            supportsTablet: true,
+            bundleIdentifier: "com.horizn.app"
+        },
+        android: {
+            package: "com.horizn.app",
+            adaptiveIcon: {
+                foregroundImage: "./assets/adaptive-icon.png",
+                backgroundColor: "#0f172a"
+            },
+            edgeToEdgeEnabled: true
+        },
+        web: {
+            favicon: "./assets/favicon.png"
+        },
+        plugins: [
+            "expo-web-browser",
+            "expo-secure-store"
+        ],
+        extra: {
+            // API_URL is read from EAS build environment, with fallback for local development
+            apiUrl: process.env.API_URL || "http://192.168.0.2:8000",
+            eas: {
+                projectId: "1f876064-f790-4eb2-bb82-3b62c65c8de9"
+            }
+        }
+    }
+};
